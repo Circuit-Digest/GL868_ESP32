@@ -1055,6 +1055,10 @@ String GL868_ESP32_GSM::getICCID() {
   if (!_modem || !_modem->isResponsive())
     return "";
 
+  // Many SIMs store ICCID as 20 digits where the last digit is a Luhn checksum.
+  // The factory tools and most operators expect the 19‑digit value printed on
+  // the SIM card, so we normalise to 19 digits if the modem returns more.
+
   // Try AT+CCID first (SIM868 command)
   _modem->flushSerial();
   _modem->getSerial().println("AT+CCID");
@@ -1068,8 +1072,9 @@ String GL868_ESP32_GSM::getICCID() {
       // Check for numeric string of appropriate length (ICCID is typically
       // 19-20 digits)
       if (line.length() >= 19 && isDigit(line[0])) {
-        // Return full string up to 20 chars
-        String iccid = line.substring(0, min((unsigned int)line.length(), 20u));
+        // Normalise to 19 digits (strip optional Luhn checksum at the end)
+        String iccid =
+            line.substring(0, min((unsigned int)line.length(), 19u));
         GL868_ESP32_LOG_D("ICCID: %s", iccid.c_str());
         return iccid;
       }
@@ -1079,7 +1084,9 @@ String GL868_ESP32_GSM::getICCID() {
         String iccid = line.substring(7);
         iccid.trim();
         if (iccid.length() >= 19) {
-          iccid = iccid.substring(0, min((unsigned int)iccid.length(), 20u));
+          // Normalise to 19 digits (strip optional Luhn checksum at the end)
+          iccid = iccid.substring(
+              0, min((unsigned int)iccid.length(), 19u));
         }
         GL868_ESP32_LOG_D("ICCID: %s", iccid.c_str());
         return iccid;
