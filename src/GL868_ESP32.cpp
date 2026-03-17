@@ -317,14 +317,14 @@ void GL868_ESP32::handleGSMRegister() {
     // Check if wait failed due to a fatal status (0, 3, 4) or just timeout
     // searching
     int stat = gsm.getRegistrationStatus();
-    if (stat == 3) { // Only force failure if explicitly denied by network
+    if (stat == 0 || stat == 3 || stat == 4) {
       GL868_ESP32_LOG_E("Immediate registration failure (status: %d)", stat);
       stateMachine.reportError(ERROR_NO_NETWORK);
       led.setError(ERROR_NO_NETWORK);
       queueCurrentData();
       stateMachine.forceState(STATE_SLEEP_PREPARE);
     }
-    // If stat is 0, 2, 4 (searching/initializing), stay in this state until timeout
+    // If stat is 2 (searching), stay in this state until timeout
   }
 }
 
@@ -577,38 +577,6 @@ void GL868_ESP32::handleSleepPrepare() {
 
   // Disable motion interrupt before sleep
   motion.disableInterrupt();
-
-  // Continuous Motion Check (5 seconds)
-  if (_motionTriggerEnabled || sleep.isMotionWake() || sleep.isMotionWakeEnabled()) {
-     GL868_ESP32_LOG_I("Checking for continuous motion for 5 seconds...");
-     motion.clearInterrupt();
-     motion.enableInterrupt(); // Re-enable to catch new events
-     
-     bool motionContinued = false;
-     uint32_t startCheck = millis();
-     while (millis() - startCheck < 5000) {
-         if (motion.motionDetected()) {
-             motionContinued = true;
-             break;
-         }
-         delay(100);
-     }
-     
-     if (motionContinued) {
-         GL868_ESP32_LOG_I("Continuous motion detected! Aborting sleep and starting new cycle.");
-         
-         // Clear GPS validity to force a fresh fix gathering
-         _currentGPS.valid = false;
-
-         // Need to clear sleep/wake flags and force back to BOOT
-         stateMachine.clearSleepRequest();
-         stateMachine.forceState(STATE_BOOT); // Restart cycle
-         return;
-     }
-     
-     // Disable again if no motion, code will re-enable shortly after for deep sleep
-     motion.disableInterrupt(); 
-  }
 
   // Handle modem power based on configuration
   if (sleep.shouldFullPowerOff()) {

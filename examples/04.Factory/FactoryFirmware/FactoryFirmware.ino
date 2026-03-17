@@ -30,7 +30,7 @@
 // ============================================================================
 // Configuration
 // ============================================================================
-#define DEVICE_ID "FACTORY_DEVICE"
+#define DEVICE_ID "GL868_ESP32"
 #define ACTIVATION_URL "https://circuitdigest.cloud/activation"
 
 // If you want to hardcode your API key, enter it here.
