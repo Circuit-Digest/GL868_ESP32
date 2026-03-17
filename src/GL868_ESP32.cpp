@@ -317,14 +317,14 @@ void GL868_ESP32::handleGSMRegister() {
     // Check if wait failed due to a fatal status (0, 3, 4) or just timeout
     // searching
     int stat = gsm.getRegistrationStatus();
-    if (stat == 0 || stat == 3 || stat == 4) {
+    if (stat == 3) { // Only force failure if explicitly denied by network
       GL868_ESP32_LOG_E("Immediate registration failure (status: %d)", stat);
       stateMachine.reportError(ERROR_NO_NETWORK);
       led.setError(ERROR_NO_NETWORK);
       queueCurrentData();
       stateMachine.forceState(STATE_SLEEP_PREPARE);
     }
-    // If stat is 2 (searching), stay in this state until timeout
+    // If stat is 0, 2, 4 (searching/initializing), stay in this state until timeout
   }
 }
 
@@ -597,6 +597,9 @@ void GL868_ESP32::handleSleepPrepare() {
      if (motionContinued) {
          GL868_ESP32_LOG_I("Continuous motion detected! Aborting sleep and starting new cycle.");
          
+         // Clear GPS validity to force a fresh fix gathering
+         _currentGPS.valid = false;
+
          // Need to clear sleep/wake flags and force back to BOOT
          stateMachine.clearSleepRequest();
          stateMachine.forceState(STATE_BOOT); // Restart cycle
