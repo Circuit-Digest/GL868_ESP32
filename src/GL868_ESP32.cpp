@@ -20,7 +20,8 @@ GL868_ESP32::GL868_ESP32()
     : _initialized(false), _forceSendRequested(false),
       _motionTriggerEnabled(false), _fullPowerOffEnabled(true),
       _offlineSentFirst(false), _gpsTimeout(GL868_ESP32_GPS_FIX_TIMEOUT),
-      _stateTimeout(0), _payloadCount(0), _operatingMode(MODE_FULL) {
+      _stateTimeout(0), _payloadCount(0), _operatingMode(MODE_FULL),
+      _errorRebootTimeout(300000) { // 5 minutes default
   _deviceId[0] = '\0';
   _apiKey[0] = '\0';
   _firstGPSTimestamp[0] = '\0';
@@ -40,6 +41,7 @@ void GL868_ESP32::begin(const char *deviceId, const char *apiKey) {
 
   // Initialize components
   led.begin();
+  led.setState(LED_BOOT);
   battery.begin();
   modem.begin();
 
@@ -557,6 +559,15 @@ void GL868_ESP32::handleSleepPrepare() {
   // (GL868_ESP32_ERROR_BLINK_LOOPS repeats) to complete before sleeping
   // so the user can read the error code from the LED.
   if (led.getState() == LED_ERROR && !led.errorBlinksComplete()) {
+    // Check for auto-reboot timeout for critical errors
+    if (_errorRebootTimeout > 0 && 
+        (stateMachine.getLastError() == ERROR_NO_SIM || stateMachine.getLastError() == ERROR_NO_NETWORK)) {
+      if (stateMachine.getTimeInState() > _errorRebootTimeout) {
+         GL868_ESP32_LOG_E("Critical error timeout reached. Rebooting ESP32...");
+         delay(100);
+         ESP.restart();
+      }
+    }
     // Still showing error pattern — stay in this state and wait
     return;
   }
@@ -787,6 +798,11 @@ void GL868_ESP32::setSendInterval(uint32_t seconds) {
 void GL868_ESP32::setGPSTimeout(uint32_t seconds) {
   _gpsTimeout = seconds * 1000;
   GL868_ESP32_LOG_D("GPS timeout set to %lu seconds", seconds);
+}
+
+void GL868_ESP32::setErrorRebootTimeout(uint32_t seconds) {
+  _errorRebootTimeout = seconds * 1000;
+  GL868_ESP32_LOG_D("Error reboot timeout set to %lu seconds", seconds);
 }
 
 void GL868_ESP32::setTimeOffset(int8_t hours, int8_t minutes) {

@@ -503,9 +503,13 @@ void promptForApiKey() {
   Serial.println("(Get your key from https://circuitdigest.cloud)");
   Serial.print("> ");
 
+  // Set LED to green blinking state while waiting
+  GeoLinker.led.setState(LED_WAIT_API_KEY);
+
   // Wait for serial input
   while (!Serial.available()) {
-    delay(100);
+    GeoLinker.update(); // Keep background systems like LED running
+    delay(50);
   }
 
   // Read API key

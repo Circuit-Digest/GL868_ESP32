@@ -83,6 +83,7 @@ bool GL868_ESP32_StateMachine::incrementRetries(uint8_t maxRetries) {
 }
 
 void GL868_ESP32_StateMachine::reportError(ErrorCode code) {
+  _lastError = code;
   GL868_ESP32_LOG_E("Error reported: %s", GL868_ESP32_ErrorToString(code));
 
   if (_errorCallback) {

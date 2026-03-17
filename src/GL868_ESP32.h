@@ -80,6 +80,13 @@ public:
   void setGPSTimeout(uint32_t seconds);
 
   /**
+   * Set timeout in seconds before the ESP32 reboots when encountering
+   * a critical network error (NO SIM, NO NETWORK).
+   * Setting to 0 disables auto-reboot. Default: 300 (5 minutes).
+   */
+  void setErrorRebootTimeout(uint32_t seconds);
+
+  /**
    * Set timezone offset for timestamps
    * @param hours Hour offset (-12 to +14)
    * @param minutes Minute offset (0, 15, 30, 45)
@@ -648,6 +655,7 @@ private:
   // Timeouts
   uint32_t _gpsTimeout;
   uint32_t _stateTimeout;
+  uint32_t _errorRebootTimeout;
 
   // GPS freshness tracking
   char _firstGPSTimestamp[20]; // First timestamp seen in GPS_WAIT_FIX state

@@ -50,6 +50,7 @@ enum LEDState {
   LED_GPRS_ATTACH,
   LED_SEND_HTTP,
   LED_SEND_OFFLINE,
+  LED_WAIT_API_KEY,  // Green blink - waiting for API key (Factory Firmware)
   LED_SLEEP_PREPARE,
   LED_SLEEP,
   LED_IDLE,          // Dim white slow blink - listening for SMS/Call

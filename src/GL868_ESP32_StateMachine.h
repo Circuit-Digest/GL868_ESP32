@@ -107,6 +107,11 @@ public:
   void reportError(ErrorCode code);
 
   /**
+   * Get the last reported error
+   */
+  ErrorCode getLastError() const { return _lastError; }
+
+  /**
    * Report data sent result
    */
   void reportDataSent(bool success, int httpCode);
@@ -126,6 +131,7 @@ private:
 
   SystemState _state;
   SystemState _previousState;
+  ErrorCode _lastError;
   uint32_t _stateEnteredAt;
   uint8_t _retryCount;
   bool _sleepRequested;

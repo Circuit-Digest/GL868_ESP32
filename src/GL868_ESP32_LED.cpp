@@ -210,6 +210,11 @@ void GL868_ESP32_LED::getStateColour(uint8_t &r, uint8_t &g, uint8_t &b) const {
     g = 255;
     b = 255; // White
     break;
+  case LED_WAIT_API_KEY:
+    r = 0;
+    g = 255;
+    b = 0; // Green
+    break;
   case LED_SEND_OFFLINE:
   case LED_IDLE:
   case LED_SMS_RECEIVED:
@@ -302,9 +307,14 @@ void GL868_ESP32_LED::update() {
           // End of this loop — count and restart
           _errorLoopCount++;
           if (_errorLoopCount >= GL868_ESP32_ERROR_BLINK_LOOPS) {
-            _errorBlinksComplete = true;
-            setRGB(COLOR_OFF);
-            return;
+            // Infinite blink for NO_SIM and NO_NETWORK
+            if (_errorCode == ERROR_NO_SIM || _errorCode == ERROR_NO_NETWORK) {
+                _errorLoopCount = 0; // Prevent completion
+            } else {
+                _errorBlinksComplete = true;
+                setRGB(COLOR_OFF);
+                return;
+            }
           }
           // Start next loop
           _errBlinksDone = 0;
